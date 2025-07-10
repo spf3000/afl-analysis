@@ -1,8 +1,8 @@
 import csv
 import re
 
-input_file = "real_afl_attendance_2024.txt"
-output_file = "parsed_real_afl_attendance_2024.csv"
+input_file = "data/real_afl_attendance_2021.txt"
+output_file = "data/parsed_real_afl_attendance_2021.csv"
 
 def is_match_line(line):
     return re.match(r"^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)", line.strip())
@@ -16,27 +16,27 @@ def is_bye_line(line):
 with open(input_file, "r") as fin, open(output_file, "w", newline="") as fout:
     writer = csv.writer(fout)
     writer.writerow(["Round", "Date", "Home v Away Teams", "Venue", "Crowd", "Result", "Disposals", "Goals"])
-    
+    reader = csv.reader(fin, delimiter="\t")
     round_num = ""
     buffer = []
-    for line in fin:
-        line = line.rstrip("\n")
-        if is_round_line(line):
-            round_num = re.findall(r"\d+", line)[0]
+    for line in reader:
+        line_string =''.join(map(str, line)) 
+        if is_round_line(line_string):
+            round_num = re.findall(r"\d+", line_string)[0]
             continue
-        if not line.strip():
+        if not line_string.strip():
             continue
-        if line.startswith("Date") and "Home v Away" in line:
+        if line_string.startswith("Date") and "Home v Away" in line:
             continue
-        if is_bye_line(line):
-            fields = [f.strip() for f in re.split(r"\s{2,}|\t", line)]
+        if is_bye_line(line_string):
+            fields = [f.strip() for f in  line]
             writer.writerow([round_num] + fields[:7])
             continue
-        if is_match_line(line):
+        if is_match_line(line_string):
             if buffer:
                 writer.writerow(buffer)
                 buffer = []
-            fields = [f.strip() for f in re.split(r"\s{2,}|\t", line)]
+            fields = [f.strip() for f in line]
             while len(fields) < 7:
                 fields.append("")
             buffer = [round_num] + fields
@@ -44,8 +44,8 @@ with open(input_file, "r") as fin, open(output_file, "w", newline="") as fout:
         # Player stats lines
         if buffer:
             if buffer[-1]:
-                buffer[-1] += "; " + line.strip()
+                buffer[-1] += "; " + line_string.strip()
             else:
-                buffer[-1] = line.strip()
+                buffer[-1] = line_string.strip()
     if buffer:
         writer.writerow(buffer)
